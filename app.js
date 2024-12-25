@@ -1640,7 +1640,7 @@ app.listen(port, () => {
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const { message } = require("statuses");
 //mongodb+srv://${process.env.username}:${process.env.MongoDb_password}@benr2423.jgm92s9.mongodb.net/?retryWrites=true&w=majority&appName=BENR2423
-const uri = `mongodb+srv://$samuel:yeehai@benr2423.jgm92s9.mongodb.net/?retryWrites=true&w=majority&appName=BENR2423`;
+const uri = `mongodb+srv://samuel:${process.env.MongoDb_password}@benr2423.jgm92s9.mongodb.net/?retryWrites=true&w=majority&appName=BENR2423`;
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
@@ -1657,7 +1657,7 @@ function verifyToken(req, res, next) {
   //split "Bearer <decode>"-->To take only decode
   if (token == null) return res.sendStatus(401);
 
-  jwt.verify(token, super_secret, (err, decoded) => {
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     console.log(err);
 
     if (err) return res.sendStatus(403);
