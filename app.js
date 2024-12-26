@@ -455,7 +455,102 @@ app.post("/register", async (req, res) => {
 });
 
 app.post("/register_test", async (req, res) => {
-
+ // Check if name, email and password and fields are provided
+ if (
+  !req.body.name ||
+  !req.body.email ||
+  !req.body.password ||
+  !req.body.gender
+) {
+  return res //if not provided, send the message
+    .status(400)
+    .send("name,email,password and gender are required.\n 안돼!!!(ू˃̣̣̣̣̣̣︿˂̣̣̣̣̣̣ ू)");
+}
+// Check if the password meets the requirements (info sec)
+// if(!passwordValidation(req.body.password)){
+//   return res.status(400).send("Password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 number and 1 special character")
+// }
+// Check if the username or email already exists
+let existing =
+  (await client.db("Assignment").collection("players").findOne({
+    name: req.body.username,
+  })) ||
+  (await client.db("Assignment").collection("players").findOne({
+    email: req.body.email,
+  }));
+//if the username or email already exists, return an error
+if (existing) {
+  res.status(400).send("username or email already exist");
+} else {
+  
+  // Find the player with the highest player_id
+  const highestIdPlayer = await client
+    .db("Assignment")
+    .collection("players")
+    .find()
+    .sort({ player_id: -1 })
+    .limit(1)
+    .toArray();
+  const highestId = highestIdPlayer[0] ? highestIdPlayer[0].player_id : 0;
+  // Increment the highest player_id by 1
+  const nextId = highestId + 1;
+  let countNum = await client
+    .db("Assignment")
+    .collection("characters_of_players")
+    .countDocuments();
+  //insert the data into the database
+  let resq = await client
+    .db("Assignment")
+    .collection("players")
+    .insertOne({
+      name: req.body.name,
+      player_id: nextId,
+      password: req.body.password,
+      email: req.body.email,
+      gender: req.body.gender,
+      //collection of the player(default character is Lillia)
+      collection: {
+        characterList: ["Lillia"],
+        character_selected: { name: "Lillia", charId: countNum },
+        charId: [countNum],
+      },
+      roles: "player",
+      money: 0,
+      points: 0,
+      achievements: ["A beginner player"],
+      friends: { friendList: [], sentRequests: [], needAcceptRequests: [] },
+      starterPackTaken: false,
+    });
+  //get the character Lillia from the database
+  let Lilla = await client
+    .db("Assignment")
+    .collection("characters")
+    .aggregate([
+      {
+        $match: { name: "Lillia" },
+      },
+      {
+        $project: {
+          _id: 0,
+          name: 1,
+          health: 1,
+          attack: 1,
+          speed: 1,
+          type: 1,
+        },
+      },
+    ])
+    .toArray();
+  console.log(Lilla[0]);
+  //add the character Lillia to the character of the player collection
+  await client
+    .db("Assignment")
+    .collection("characters_of_players")
+    .insertOne({ char_id: countNum, characters: Lilla[0] }, { upsert: true });
+  res.send(
+    "Congratulation! Your account register succesfully!\nLog in to start your battle journey! \n( ◑‿◑)ɔ┏🍟--🍔┑٩(^◡^ )"
+  );
+}
 });
 //login for users
 app.post("/userLogin", async (req, res) => {
