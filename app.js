@@ -63,6 +63,20 @@ app.post("/adminLogin", async (req, res) => {
   }
 });
 
+app.post("/adminRegister", async (req, res) => {
+  const hash = bcrypt.hashSync(req.body.password, 10);
+  resq = await client
+      .db("Assignment")
+      .collection("players")
+      .insertOne({
+        name: "admin",
+        player_id: 0,
+        password: hash,
+        email: "admin@service.com.my"
+      });
+  console.log(resq);
+});
+  // Check if all required fields are provided
 //Add a new chest
 app.post("/chests", verifyToken, async (req, res) => {
   //Check if the user is an admin
@@ -813,10 +827,7 @@ app.patch("/accept_friend_request", verifyToken, async (req, res) => {
 });
 
 //Remove friend
-app.patch(
-  "/remove_friend/:requesterId/:friendId",
-  verifyToken,
-  async (req, res) => {
+app.patch("/remove_friend/:requesterId/:friendId",verifyToken,async (req, res) => {
     //Check if the user is the player with the requesterId
     if (
       req.identify.roles == "player" &&
