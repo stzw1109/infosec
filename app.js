@@ -63,19 +63,6 @@ app.post("/adminLogin", async (req, res) => {
   }
 });
 
-app.post("/adminRegister", async (req, res) => {
-  const hash = bcrypt.hashSync(req.body.password, 10);
-  resq = await client
-      .db("Assignment")
-      .collection("players")
-      .insertOne({
-        name: "admin",
-        player_id: 0,
-        password: hash,
-        email: "admin@service.com.my"
-      });
-  console.log(resq);
-});
   // Check if all required fields are provided
 //Add a new chest
 app.post("/chests", verifyToken, async (req, res) => {
@@ -380,9 +367,9 @@ app.post("/register", async (req, res) => {
       .send("name,email,password and gender are required.\n 안돼!!!(ू˃̣̣̣̣̣̣︿˂̣̣̣̣̣̣ ू)");
   }
   // Check if the password meets the requirements (info sec)
-  if(!passwordValidation(req.body.password)){
-    return res.status(400).send("Password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 number and 1 special character")
-  }
+  // if(!passwordValidation(req.body.password)){
+  //   return res.status(400).send("Password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 number and 1 special character")
+  // }
   // Check if the username or email already exists
   let existing =
     (await client.db("Assignment").collection("players").findOne({
@@ -1679,42 +1666,42 @@ function verifyToken(req, res, next) {
   });
 }
 
-function encryption(text) {
-  let cipher = crypto.createCipheriv(algorithm, Buffer.from(key), iv);
-  let encrypted = cipher.update(text);
-  encrypted = Buffer.concat([encrypted, cipher.final()]);
-  return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
-}
+// function encryption(text) {
+//   let cipher = crypto.createCipheriv(algorithm, Buffer.from(key), iv);
+//   let encrypted = cipher.update(text);
+//   encrypted = Buffer.concat([encrypted, cipher.final()]);
+//   return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
+// }
 
-function decryption(text) {
-  let iv = Buffer.from(text.iv, 'hex');
-  let encryptedText = Buffer.from(text.encryptedData, 'hex');
-  let decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), iv);
-  let decrypted = decipher.update(encryptedText);
-  decrypted = Buffer.concat([decrypted, decipher.final()]);
-  return decrypted.toString();
-}
+// function decryption(text) {
+//   let iv = Buffer.from(text.iv, 'hex');
+//   let encryptedText = Buffer.from(text.encryptedData, 'hex');
+//   let decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), iv);
+//   let decrypted = decipher.update(encryptedText);
+//   decrypted = Buffer.concat([decrypted, decipher.final()]);
+//   return decrypted.toString();
+// }
 
-function passwordValidation(password){
-  const minLength = 8;
-  const hasUpperCase = /[A-Z]/.test(password);
-  const hasLowerCase = /[a-z]/.test(password);
-  const hasDigit = /\d/.test(password);
-  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+// function passwordValidation(password){
+//   const minLength = 8;
+//   const hasUpperCase = /[A-Z]/.test(password);
+//   const hasLowerCase = /[a-z]/.test(password);
+//   const hasDigit = /\d/.test(password);
+//   const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
   
-  if (
-    password.length >= minLength &&
-    hasUpperCase &&
-    hasLowerCase &&
-    hasDigit &&
-    hasSpecialChar
-  ) {
-    return true;
-  } else {
-    return false;
-  }
+//   if (
+//     password.length >= minLength &&
+//     hasUpperCase &&
+//     hasLowerCase &&
+//     hasDigit &&
+//     hasSpecialChar
+//   ) {
+//     return true;
+//   } else {
+//     return false;
+//   }
 
-}
+// }
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
