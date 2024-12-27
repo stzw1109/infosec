@@ -498,7 +498,105 @@ app.post("/register", async (req, res) => {
     );
   }
 });
-
+app.post("/register_test", async (req, res) => {
+  // Check if name, email and password and fields are provided
+  if (
+   !req.body.name ||
+   !req.body.email ||
+   !req.body.password ||
+   !req.body.gender
+ ) {
+   return res //if not provided, send the message
+     .status(400)
+     .send("name,email,password and gender are required.\n 안돼!!!(ू˃̣̣̣̣̣̣︿˂̣̣̣̣̣̣ ू)");
+ }
+ // Check if the password meets the requirements (info sec)
+ // if(!passwordValidation(req.body.password)){
+ //   return res.status(400).send("Password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 number and 1 special character")
+ // }
+ // Check if the username or email already exists
+ let existing =
+   (await client.db("Assignment").collection("players").findOne({
+     name: req.body.username,
+   })) ||
+   (await client.db("Assignment").collection("players").findOne({
+     email: req.body.email,
+   }));
+ //if the username or email already exists, return an error
+ if (existing) {
+   res.status(400).send("username or email already exist");
+ } else {
+   
+   // Find the player with the highest player_id
+   const highestIdPlayer = await client
+     .db("Assignment")
+     .collection("players")
+     .find()
+     .sort({ player_id: -1 })
+     .limit(1)
+     .toArray();
+   const highestId = highestIdPlayer[0] ? highestIdPlayer[0].player_id : 0;
+   // Increment the highest player_id by 1
+   const nextId = highestId + 1;
+   let countNum = await client
+     .db("Assignment")
+     .collection("characters_of_players")
+     .countDocuments();
+   //insert the data into the database
+   let resq = await client
+     .db("Assignment")
+     .collection("players")
+     .insertOne({
+       name: req.body.name,
+       player_id: nextId,
+       password: req.body.password,
+       email: req.body.email,
+       gender: req.body.gender,
+       //collection of the player(default character is Lillia)
+       collection: {
+         characterList: ["Lillia"],
+         character_selected: { name: "Lillia", charId: countNum },
+         charId: [countNum],
+       },
+       roles: "player",
+       money: 0,
+       points: 0,
+       achievements: ["A beginner player"],
+       friends: { friendList: [], sentRequests: [], needAcceptRequests: [] },
+       starterPackTaken: false,
+     });
+   //get the character Lillia from the database
+   let Lilla = await client
+     .db("Assignment")
+     .collection("characters")
+     .aggregate([
+       {
+         $match: { name: "Lillia" },
+       },
+       {
+         $project: {
+           _id: 0,
+           name: 1,
+           health: 1,
+           attack: 1,
+           speed: 1,
+           type: 1,
+         },
+       },
+     ])
+     .toArray();
+   console.log(Lilla[0]);
+   //add the character Lillia to the character of the player collection
+   await client
+     .db("Assignment")
+     .collection("characters_of_players")
+     .insertOne({ char_id: countNum, characters: Lilla[0] }, { upsert: true });
+   res.send(
+     "Congratulation! Your account register succesfully!\nLog in to start your battle journey! \n( ◑‿◑)ɔ┏🍟--🍔┑٩(^◡^ )"
+   );
+ }
+ });
+ 
 //login for users
 app.post("/userLogin", async (req, res) => {
   // Check if name and email fields are provided
@@ -532,6 +630,40 @@ app.post("/userLogin", async (req, res) => {
           { expiresIn: "1h" }
         );
         console.log(token);
+        res.status(200).send({
+          message:
+            "Login successful. Remember to gain your starter pack!\n(っ＾▿＾)۶🍸🌟🍺٩(˘◡˘ )",
+          token: token,
+        });
+      } else {
+        //if the password is incorrect, return an error
+        res.send("Wrong Password ⸨◺_◿⸩");
+      }
+    } else {
+      //if the password is not provided, return an error
+      res.send("Password not provided ⸨◺_◿⸩");
+    }
+  }
+});
+app.post("/userLogin_test", async (req, res) => {
+  // Check if name and email fields are provided
+  if (!req.body.name || !req.body.email) {
+    //if not provided, return an error
+    return res.status(400).send("name and email are required. ( ˘ ³˘)❤");
+  }
+  //Check if the user is the player with the name and email
+  let resp = await client
+    .db("Assignment")
+    .collection("players")
+    .findOne({
+      $and: [{ name: req.body.name }, { email: req.body.email }],
+    });
+  if (!resp) {
+    res.send("User not found ⸨◺_◿⸩");
+  } else {
+    // Check if password is provided
+    if (resp.password) {
+      if (req.body.password == resp.password) {
         res.status(200).send({
           message:
             "Login successful. Remember to gain your starter pack!\n(っ＾▿＾)۶🍸🌟🍺٩(˘◡˘ )",
@@ -592,6 +724,42 @@ app.patch("/login/starterpack", verifyToken, async (req, res) => {
       .status(401)
       .send("You are not authorised to take the starter pack");
   }
+});
+app.patch("/login/starterpack_test", verifyToken, async (req, res) => {
+  // Check if name is provided
+  if (!req.body.name) {
+    return res.status(400).send("name is required.☜(`o´)");
+  }
+   //set the range of money taken
+   const min = 1000; //minimum amount of money
+   const max = 2000; //maximum amount of money
+   //randomly genarate amount of money
+   const newMoneyAmount = Math.floor(Math.random() * (max - min + 1)) + min;
+   //update the money and starter pack taken of the user
+   let user = await client
+     .db("Assignment")
+     .collection("players")
+     .findOneAndUpdate(
+       {
+         $and: [
+           {
+             name: req.body.name,
+           },
+           { starterPackTaken: { $eq: false } }, //check if the starter pack is taken
+         ],
+       },
+       { $set: { starterPackTaken: true, money: newMoneyAmount } },
+       { returnOriginal: false }
+     );
+   if (user === null) {
+     //if the starter pack is already taken, return an error
+     res.status(400).send("Starter pack already taken (╯°□°）╯");
+   } else {
+     //if the starter pack is not taken, send the message
+     res.send(
+       `Total amount of RM ${newMoneyAmount} is given to player ${req.body.name}🤑🤑🤑 `
+     );
+   }
 });
 
 //Read own profile
@@ -683,6 +851,92 @@ app.get("/readUserProfile/:player_name", verifyToken, async (req, res) => {
     return res.status(401).send("You are not authorised to read this player");
   }
 });
+app.get("/readUserProfile_test/:player_name", verifyToken, async (req, res) => {
+  // Check if the user is authorised to read the profile
+  if (req.params.player_name) {
+    //Read the own profile of the player
+    let document = await client
+      .db("Assignment")
+      .collection("players")
+      .aggregate([
+        {
+          $match: { name: req.params.player_name },
+        },
+        {
+          $project: {
+            _id: 0,
+            player_id: 1,
+            name: 1,
+            gender: 1,
+            money: 1,
+            collection: 1,
+            points: 1,
+            friends: 1,
+            achievements: 1,
+            notifications: 1,
+          },
+        },
+        {
+          $lookup: {
+            from: "players",
+            localField: "friends.friendList",
+            foreignField: "player_id",
+            as: "friends.friendList",
+          },
+        },
+        {
+          $lookup: {
+            from: "characters_of_players",
+            localField: "collection.charId",
+            foreignField: "char_id",
+            as: "collection.charId",
+          },
+        },
+        {
+          $lookup: {
+            from: "characters_of_players",
+            localField: "collection.character_selected.charId",
+            foreignField: "char_id",
+            as: "collection.character_selected.charId",
+          },
+        },
+        {
+          $project: {
+            player_id: 1,
+            name: 1,
+            gender: 1,
+            money: 1,
+            points: 1,
+            "collection.characterList": 1,
+            "collection.character_selected.name": 1,
+            "collection.character_selected.charId.char_id": 1,
+            "collection.character_selected.charId.characters": 1,
+            "collection.charId.char_id": 1,
+            "collection.charId.characters": 1,
+            "friends.friendList.player_id": 1,
+            "friends.friendList.points": 1,
+            "friends.friendList.name": 1,
+            "friends.friendList.gender": 1,
+            "friends.sentRequests": 1,
+            "friends.needAcceptRequests": 1,
+            achievements: 1,
+            notifications: 1,
+          },
+        },
+        {
+          $project: {
+            "collection.charId._id": 0,
+          },
+        },
+      ])
+      .toArray();
+    res.send(document);
+  } else {
+    //If the user is not authorised to read the profile, return an error
+    return res.status(401).send("Error");
+  }
+});
+
 
 // To send a friend request to another user
 app.post("/send_friend_request", verifyToken, async (req, res) => {
