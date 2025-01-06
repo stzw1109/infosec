@@ -7,15 +7,17 @@ const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const app = express();
 
+//encryption and decryption purpose
 const algorithm = 'aes-256-cbc';
 const key = crypto.randomBytes(32);
 const iv = crypto.randomBytes(16);
-const credentials = "D:\\Samuel's work\\coding\\infosec-1\\X509-cert-723266351894110951.pem";
 const port = process.env.PORT || 3000;
 
 //variable testing
 const certificate = process.env.MONGODB_CERTIFICATE;
 const privateKey = process.env.MONGODB_PRIVATE_KEY;
+const credentials_testing = "D:\\Samuel's work\\coding\\infosec-1\\X509-cert-723266351894110951.pem";
+const credentials = process.env.MONGO_CERT_PATH;
 
 app.use(express.json());
 app.use(express.static("public"));
@@ -1953,7 +1955,7 @@ const { message } = require("statuses");
 // });
 
 const client = new MongoClient('mongodb+srv://benr2423.jgm92s9.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority&appName=BENR2423', {
-  tlsCertificateKeyFile: process.env.credentials,
+  tlsCertificateKeyFile: credentials,
   serverApi: ServerApiVersion.v1
 });
 
