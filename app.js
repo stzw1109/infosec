@@ -416,6 +416,10 @@ app.post("/register", async (req, res) => {
       .status(400)
       .send("name,email,password and gender are required.\n 안돼!!!(ू˃̣̣̣̣̣̣︿˂̣̣̣̣̣̣ ू)");
   }
+//    Check if the password meets the requirements (info sec)
+ if(!passwordValidation(req.body.password)){
+   return res.status(400).send("Password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 number and 1 special character")
+ }
   // Check if the password meets the requirements (info sec)
   // if(!passwordValidation(req.body.password)){
   //   return res.status(400).send("Password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 number and 1 special character")
@@ -1948,22 +1952,22 @@ const { message } = require("statuses");
 //   }
 // });
 
-// const client = new MongoClient('mongodb+srv://benr2423.jgm92s9.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority&appName=BENR2423', {
-//   tlsCertificateKeyFile: credentials,
-//   serverApi: ServerApiVersion.v1
-// });
+const client = new MongoClient('mongodb+srv://benr2423.jgm92s9.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority&appName=BENR2423', {
+  tlsCertificateKeyFile: process.env.credentials,
+  serverApi: ServerApiVersion.v1
+});
 
 
 //Using credentials such as username and password to connect to Mongodb
-const uri = `mongodb+srv://samuel:${process.env.MongoDb_password}@benr2423.jgm92s9.mongodb.net/?retryWrites=true&w=majority&appName=BENR2423`;
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
-});
+// const uri = `mongodb+srv://samuel:${process.env.MongoDb_password}@benr2423.jgm92s9.mongodb.net/?retryWrites=true&w=majority&appName=BENR2423`;
+// // Create a MongoClient with a MongoClientOptions object to set the Stable API version
+// const client = new MongoClient(uri, {
+//   serverApi: {
+//     version: ServerApiVersion.v1,
+//     strict: true,
+//     deprecationErrors: true,
+//   },
+// });
 
 //list of functions
 function verifyToken(req, res, next) {
