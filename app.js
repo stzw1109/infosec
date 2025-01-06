@@ -10,7 +10,7 @@ const app = express();
 const algorithm = 'aes-256-cbc';
 const key = crypto.randomBytes(32);
 const iv = crypto.randomBytes(16);
-const cert = fs.readFileSync('X509-cert-723266351894110951.pem');
+const credentials = fs.readFileSync("D:\Samuel's work\coding\infosec-1\X509-cert-723266351894110951.pem");
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
