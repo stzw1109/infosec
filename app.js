@@ -1936,17 +1936,9 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const { message } = require("statuses");
 
 //Using certificate to connect to Mongodb
-const uri = `mongodb+srv://benr2423.jgm92s9.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority&appName=BENR2423`;
-
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version and include the certificate
-const client = new MongoClient(uri, {
-  sslKey: cert,
-  sslCert: cert,
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
+const client = new MongoClient('mongodb+srv://benr2423.jgm92s9.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority&appName=BENR2423', {
+  tlsCertificateKeyFile: credentials,
+  serverApi: ServerApiVersion.v1
 });
 
 
