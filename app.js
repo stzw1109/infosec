@@ -4,12 +4,13 @@ const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const express = require("express");
 const jwt = require("jsonwebtoken");
+const fs = require("fs");
 const app = express();
 
 const algorithm = 'aes-256-cbc';
 const key = crypto.randomBytes(32);
 const iv = crypto.randomBytes(16);
-
+const cert = fs.readFileSync('X509-cert-723266351894110951.pem');
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
@@ -1933,16 +1934,32 @@ app.listen(port, () => {
 //Path:package.json
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const { message } = require("statuses");
-//mongodb+srv://${process.env.username}:${process.env.MongoDb_password}@benr2423.jgm92s9.mongodb.net/?retryWrites=true&w=majority&appName=BENR2423
-const uri = `mongodb+srv://samuel:${process.env.MongoDb_password}@benr2423.jgm92s9.mongodb.net/?retryWrites=true&w=majority&appName=BENR2423`;
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+
+//Using certificate to connect to Mongodb
+const uri = `mongodb+srv://benr2423.jgm92s9.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority&appName=BENR2423`;
+
+// Create a MongoClient with a MongoClientOptions object to set the Stable API version and include the certificate
 const client = new MongoClient(uri, {
+  sslKey: cert,
+  sslCert: cert,
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
   },
 });
+
+
+// //Using credentials such as username and password to connect to Mongodb
+// const uri = `mongodb+srv://samuel:${process.env.MongoDb_password}@benr2423.jgm92s9.mongodb.net/?retryWrites=true&w=majority&appName=BENR2423`;
+// // Create a MongoClient with a MongoClientOptions object to set the Stable API version
+// const client = new MongoClient(uri, {
+//   serverApi: {
+//     version: ServerApiVersion.v1,
+//     strict: true,
+//     deprecationErrors: true,
+//   },
+// });
 
 //list of functions
 function verifyToken(req, res, next) {
@@ -1962,42 +1979,42 @@ function verifyToken(req, res, next) {
   });
 }
 
-// function encryption(text) {
-//   let cipher = crypto.createCipheriv(algorithm, Buffer.from(key), iv);
-//   let encrypted = cipher.update(text);
-//   encrypted = Buffer.concat([encrypted, cipher.final()]);
-//   return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
-// }
+ function encryption(text) {
+   let cipher = crypto.createCipheriv(algorithm, Buffer.from(key), iv);
+   let encrypted = cipher.update(text);
+   encrypted = Buffer.concat([encrypted, cipher.final()]);
+   return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
+ }
 
-// function decryption(text) {
-//   let iv = Buffer.from(text.iv, 'hex');
-//   let encryptedText = Buffer.from(text.encryptedData, 'hex');
-//   let decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), iv);
-//   let decrypted = decipher.update(encryptedText);
-//   decrypted = Buffer.concat([decrypted, decipher.final()]);
-//   return decrypted.toString();
-// }
+function decryption(text) {
+  let iv = Buffer.from(text.iv, 'hex');
+  let encryptedText = Buffer.from(text.encryptedData, 'hex');
+  let decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), iv);
+  let decrypted = decipher.update(encryptedText);
+  decrypted = Buffer.concat([decrypted, decipher.final()]);
+  return decrypted.toString();
+}
 
-// function passwordValidation(password){
-//   const minLength = 8;
-//   const hasUpperCase = /[A-Z]/.test(password);
-//   const hasLowerCase = /[a-z]/.test(password);
-//   const hasDigit = /\d/.test(password);
-//   const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+function passwordValidation(password){
+  const minLength = 8;
+  const hasUpperCase = /[A-Z]/.test(password);
+  const hasLowerCase = /[a-z]/.test(password);
+  const hasDigit = /\d/.test(password);
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
   
-//   if (
-//     password.length >= minLength &&
-//     hasUpperCase &&
-//     hasLowerCase &&
-//     hasDigit &&
-//     hasSpecialChar
-//   ) {
-//     return true;
-//   } else {
-//     return false;
-//   }
+  if (
+    password.length >= minLength &&
+    hasUpperCase &&
+    hasLowerCase &&
+    hasDigit &&
+    hasSpecialChar
+  ) {
+    return true;
+  } else {
+    return false;
+  }
 
-// }
+}
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
