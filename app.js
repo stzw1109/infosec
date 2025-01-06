@@ -10,8 +10,12 @@ const app = express();
 const algorithm = 'aes-256-cbc';
 const key = crypto.randomBytes(32);
 const iv = crypto.randomBytes(16);
-const credentials = fs.readFileSync("D:\Samuel's work\coding\infosec-1\X509-cert-723266351894110951.pem");
+const credentials = "D:\\Samuel's work\\coding\\infosec-1\\X509-cert-723266351894110951.pem";
 const port = process.env.PORT || 3000;
+
+//variable testing
+const certificate = process.env.MONGODB_CERTIFICATE;
+const privateKey = process.env.MONGODB_PRIVATE_KEY;
 
 app.use(express.json());
 app.use(express.static("public"));
@@ -1937,9 +1941,16 @@ const { message } = require("statuses");
 
 //Using certificate to connect to Mongodb
 const client = new MongoClient('mongodb+srv://benr2423.jgm92s9.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority&appName=BENR2423', {
-  tlsCertificateKeyFile: credentials,
-  serverApi: ServerApiVersion.v1
+  tls: true,
+  tlsCertificateKeyFile: {
+    certificate: certificate,
+    privateKey: privateKey
+  }
 });
+// const client = new MongoClient('mongodb+srv://benr2423.jgm92s9.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority&appName=BENR2423', {
+//   tlsCertificateKeyFile: credentials,
+//   serverApi: ServerApiVersion.v1
+// });
 
 
 // //Using credentials such as username and password to connect to Mongodb
