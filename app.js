@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const express = require("express");
 const jwt = require("jsonwebtoken");
+const rateLimit = require('express-rate-limit');
 const fs = require("fs");
 const app = express();
 
@@ -14,17 +15,21 @@ const iv = crypto.randomBytes(16);
 const port = process.env.PORT || 3000;
 
 //variable testing
-const certificate = process.env.MONGODB_CERTIFICATE;
-const privateKey = process.env.MONGODB_PRIVATE_KEY;
 const credentials_testing = "D:\\Samuel's work\\coding\\infosec-1\\X509-cert-723266351894110951.pem";
 const credentials = process.env.MONGO_CERT_PATH;
+// Rate limit for unauthorized users
+const unauthorizedRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 requests per windowMs
+  message: "Too many requests from this IP, please try again after 15 minutes"
+});
 
 app.use(express.json());
 app.use(express.static("public"));
 
 //API FOR ADMIN
 //login for admin
-app.post("/adminLogin", async (req, res) => {
+app.post("/adminLogin",unauthorizedRateLimiter, async (req, res) => {
   // Check if all required fields are provided
   if (!req.body.name || !req.body.email) {
     return res.status(400).send("name and email are required. ( ˘ ³˘)❤");
@@ -609,7 +614,7 @@ app.post("/register_test", async (req, res) => {
  });
  
 //login for users
-app.post("/userLogin", async (req, res) => {
+app.post("/userLogin",unauthorizedRateLimiter, async (req, res) => {
   // Check if name and email fields are provided
   if (!req.body.name || !req.body.email) {
     //if not provided, return an error
@@ -1944,15 +1949,6 @@ app.listen(port, () => {
 //Path:package.json
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const { message } = require("statuses");
-
-//Using certificate to connect to Mongodb
-// const client = new MongoClient('mongodb+srv://benr2423.jgm92s9.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority&appName=BENR2423', {
-//   tls: true,
-//   tlsCertificateKeyFile: {
-//     certificate: certificate,
-//     privateKey: privateKey
-//   }
-// });
 
 const client = new MongoClient('mongodb+srv://benr2423.jgm92s9.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority&appName=BENR2423', {
   tlsCertificateKeyFile: credentials,
