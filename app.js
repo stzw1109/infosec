@@ -17,10 +17,15 @@ const port = process.env.PORT || 3000;
 //variable testing
 const credentials_testing = "D:\\Samuel's work\\coding\\infosec-1\\X509-cert-723266351894110951.pem";
 const credentials = process.env.MONGO_CERT_PATH;
+
+// Convert the values to numbers
+const maxRetries = parseInt(process.env.MAX_RETRIES, 10);
+const timeout = parseInt(process.env.TIMEOUT, 10);
+
 // Rate limit for unauthorized users
 const unauthorizedRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit each IP to 10 requests per windowMs
+  windowMs: timeout, // 15 minutes
+  max: maxRetries, // Limit each IP to 10 requests per windowMs
   message: "Too many requests from this IP, please try again after 15 minutes"
 });
 
