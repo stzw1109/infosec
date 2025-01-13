@@ -8,7 +8,7 @@ const rateLimit = require('express-rate-limit');
 const fs = require("fs");
 const app = express();
 
-//encryption and decryption purpose
+//encryption and decryption purpose (dont know got use or not)
 const algorithm = 'aes-256-cbc';
 const key = crypto.randomBytes(32);
 const iv = crypto.randomBytes(16);
@@ -18,23 +18,17 @@ const port = process.env.PORT || 3000;
 const credentials_testing = "D:\\Samuel's work\\coding\\infosec-1\\X509-cert-723266351894110951.pem";
 const credentials = process.env.MONGO_CERT_PATH;
 
-// Convert the values to numbers
-// const maxRetries = parseInt(process.env.MAX_RETRIES, 10);
-// const timeout = parseInt(process.env.TIMEOUT, 10);
-
 // Rate limit for unauthorized users
-const unauthorizedRateLimiter = rateLimit({
-  windowMs: process.env.TIMEOUT, //process.env.TIMEOUT or timeout
-  max: process.env.MAX_RETRIES, //process.env.MAX_RETRIES or maxRetries
-  message: "Too many requests from this IP, please try again later",
-  
-  handler: (req, res, next, options) => {
-    res.status(options.statusCode).send({
-      message: options.message,
-      status: options.statusCode,
-      retryAfter: options.windowMs / 1000 // Time in seconds
-    });
-  }
+const login_RateLimiter = rateLimit({
+  windowMs: process.env.TIMEOUT_LOGIN, 
+  max: process.env.MAX_RETRIES_LOGIN, 
+  message: "Please try again later"
+});
+
+const apiRateLimiter = rateLimit({
+  windowMs: process.env.TIMEOUT, 
+  max: process.env.MAX_RETRIES, 
+  message: "Too many requests, please try again shortly"
 });
 
 app.use(express.json());
@@ -42,7 +36,7 @@ app.use(express.static("public"));
 
 //API FOR ADMIN
 //login for admin
-app.post("/adminLogin",unauthorizedRateLimiter, async (req, res) => {
+app.post("/adminLogin",login_RateLimiter, async (req, res) => {
   // Check if all required fields are provided
   if (!req.body.name || !req.body.email) {
     return res.status(400).send("name and email are required. ( ˘ ³˘)❤");
@@ -135,7 +129,7 @@ app.post("/adminLogin_test", async (req, res) => {
 
   // Check if all required fields are provided
 //Add a new chest
-app.post("/chests", verifyToken, async (req, res) => {
+app.post("/chests",apiRateLimiter, verifyToken, async (req, res) => {
   //Check if the user is an admin
   if (req.identify.roles == "admin") {
     // Check if chest,price,characters and Max_power_level fields are provided
@@ -182,7 +176,7 @@ app.post("/chests", verifyToken, async (req, res) => {
 });
 
 //Add a new character
-app.post("/character", verifyToken, async (req, res) => {
+app.post("/character",apiRateLimiter, verifyToken, async (req, res) => {
   // Check if the user is authorised to create a character
   if (req.identify.roles != "admin") {
     return res.status(401).send("You are not authorised to create a character");
@@ -229,7 +223,7 @@ app.post("/character", verifyToken, async (req, res) => {
 });
 
 //Update a character
-app.patch("/characterupdate/:charactername", verifyToken, async (req, res) => {
+app.patch("/characterupdate/:charactername",apiRateLimiter, verifyToken, async (req, res) => {
   //Check if the user is an admin
   if (req.identify.roles == "admin") {
     //Check if health,attack,speed and typefields are provided
@@ -280,7 +274,7 @@ app.patch("/characterupdate/:charactername", verifyToken, async (req, res) => {
 });
 
 //Add character to chest
-app.patch("/add_character_to_chest", verifyToken, async (req, res) => {
+app.patch("/add_character_to_chest",apiRateLimiter, verifyToken, async (req, res) => {
   //Check if the user is an admin
   if (req.identify.roles == "admin") {
     //Check if chest and character_name are provided
@@ -320,7 +314,7 @@ app.patch("/add_character_to_chest", verifyToken, async (req, res) => {
 });
 
 //Delete character from chest
-app.patch("/delete_character", verifyToken, async (req, res) => {
+app.patch("/delete_character",apiRateLimiter, verifyToken, async (req, res) => {
   //Check if the user is an admin
   if (req.identify.roles != "admin") {
     return res
@@ -370,7 +364,7 @@ app.patch("/delete_character", verifyToken, async (req, res) => {
 });
 
 //Delete a chest
-app.delete("/deleteChest/:chestName", verifyToken, async (req, res) => {
+app.delete("/deleteChest/:chestName",apiRateLimiter, verifyToken, async (req, res) => {
   //Check if the user is the admin
   if (req.identify.roles == "admin") {
     //Check if chest exists
@@ -401,7 +395,7 @@ app.delete("/deleteChest/:chestName", verifyToken, async (req, res) => {
 });
 
 //Delete the battle record of a player
-app.delete("/deleteBattleRecord/:player_name",verifyToken,async (req, res) => {
+app.delete("/deleteBattleRecord/:player_name",apiRateLimiter,verifyToken,async (req, res) => {
     //Check if the user is the admin
     if (req.identify.roles == "admin") {
       //Delete the BattleRecord of the player
@@ -424,7 +418,7 @@ app.delete("/deleteBattleRecord/:player_name",verifyToken,async (req, res) => {
 
 //API FOR USERS
 //Registration account for users
-app.post("/register", async (req, res) => {
+app.post("/register", apiRateLimiter,async (req, res) => {
   // Check if name, email and password and fields are provided
   if (
     !req.body.name ||
@@ -627,7 +621,7 @@ app.post("/register_test", async (req, res) => {
  });
  
 //login for users
-app.post("/userLogin",unauthorizedRateLimiter, async (req, res) => {
+app.post("/userLogin",login_RateLimiter, async (req, res) => {
   // Check if name and email fields are provided
   if (!req.body.name || !req.body.email) {
     //if not provided, return an error
@@ -710,7 +704,7 @@ app.post("/userLogin_test", async (req, res) => {
 });
 
 //login to get startpack
-app.patch("/login/starterpack", verifyToken, async (req, res) => {
+app.patch("/login/starterpack",apiRateLimiter, verifyToken, async (req, res) => {
   // Check if name is provided
   if (!req.body.name) {
     return res.status(400).send("name is required.☜(`o´)");
@@ -792,7 +786,7 @@ app.patch("/login/starterpack_test", verifyToken, async (req, res) => {
 });
 
 //Read own profile
-app.get("/readUserProfile/:player_name", verifyToken, async (req, res) => {
+app.get("/readUserProfile/:player_name",apiRateLimiter, verifyToken, async (req, res) => {
   // Check if the user is authorised to read the profile
   if (
     req.identify.roles == "player" &&
@@ -968,7 +962,7 @@ app.get("/readUserProfile_test/:player_name", verifyToken, async (req, res) => {
 
 
 // To send a friend request to another user
-app.post("/send_friend_request", verifyToken, async (req, res) => {
+app.post("/send_friend_request", verifyToken, apiRateLimiter,async (req, res) => {
   // Check if requesterId and requestedId are provided
   if (!req.body.requesterId || !req.body.requestedId) {
     return res
@@ -1050,7 +1044,7 @@ app.post("/send_friend_request", verifyToken, async (req, res) => {
 });
 
 // To  accept a friend request from another user
-app.patch("/accept_friend_request", verifyToken, async (req, res) => {
+app.patch("/accept_friend_request", verifyToken,apiRateLimiter, async (req, res) => {
   // Check if accepterId and requesterId are provided
   if (!req.body.accepterId || !req.body.requesterId) {
     return res
@@ -1139,7 +1133,7 @@ app.patch("/accept_friend_request", verifyToken, async (req, res) => {
 });
 
 //Remove friend
-app.patch("/remove_friend/:requesterId/:friendId",verifyToken,async (req, res) => {
+app.patch("/remove_friend/:requesterId/:friendId",apiRateLimiter,verifyToken,async (req, res) => {
     //Check if the user is the player with the requesterId
     if (
       req.identify.roles == "player" &&
@@ -1195,7 +1189,7 @@ app.patch("/remove_friend/:requesterId/:friendId",verifyToken,async (req, res) =
 );
 
 //Update own profile
-app.patch("/update/:name", verifyToken, async (req, res) => {
+app.patch("/update/:name", verifyToken,apiRateLimiter,async (req, res) => {
   //Check is the name,email,password and gender are provided
   if (!req.body.name || !req.body.email || !req.body.gender) {
     return res
@@ -1251,7 +1245,7 @@ app.patch("/update/:name", verifyToken, async (req, res) => {
 });
 
 //Delete account
-app.delete("/delete/:name", verifyToken, async (req, res) => {
+app.delete("/delete/:name", verifyToken, apiRateLimiter,async (req, res) => {
   //Check if the user is the player with the name
   if (req.identify.roles == "player" && req.identify.name == req.params.name) {
     //Check if the player exists
@@ -1279,7 +1273,7 @@ app.delete("/delete/:name", verifyToken, async (req, res) => {
 });
 
 //Read the chess inventory
-app.get("/readchests", verifyToken, async (req, res) => {
+app.get("/readchests", verifyToken,apiRateLimiter, async (req, res) => {
   //Check if the user is authorised to view the chests
   if (req.identify.roles == "player" || req.identify.roles == "admin") {
     //Read the chests from the database
@@ -1296,7 +1290,7 @@ app.get("/readchests", verifyToken, async (req, res) => {
 });
 
 //Buying a chest with money to get a character
-app.patch("/buying_chest", verifyToken, async (req, res) => {
+app.patch("/buying_chest", verifyToken,apiRateLimiter, async (req, res) => {
   //Check if the name,email and chest are provided
   if (!req.body.name || !req.body.email || !req.body.chest) {
     return res
@@ -1502,7 +1496,7 @@ app.patch("/buying_chest", verifyToken, async (req, res) => {
 });
 
 //Update to change selected_character of a user
-app.patch("/change_selected_char", verifyToken, async (req, res) => {
+app.patch("/change_selected_char",apiRateLimiter, verifyToken, async (req, res) => {
   //Check if the name,email and character_selected are provided
   if (!req.body.name || !req.body.email || !req.body.character_selected) {
     return res
@@ -1575,7 +1569,7 @@ app.patch("/change_selected_char", verifyToken, async (req, res) => {
 });
 
 //To battle in game with another player
-app.patch("/battle", verifyToken, async (req, res) => {
+app.patch("/battle", verifyToken, apiRateLimiter,async (req, res) => {
   //Check if the name and email are provided
   if (!req.body.name || !req.body.email) {
     return res.status(400).send("name and email are required. ( ˘ ³˘)❤");
@@ -1794,7 +1788,7 @@ app.patch("/battle", verifyToken, async (req, res) => {
 });
 
 //Read the battle record of a player
-app.get("/read_battle_record/:player_name", verifyToken, async (req, res) => {
+app.get("/read_battle_record/:player_name",apiRateLimiter, verifyToken, async (req, res) => {
   // Check if the player is authorised to read the battle record
   if (
     req.identify.roles == "player" &&
@@ -1828,7 +1822,7 @@ app.get("/read_battle_record/:player_name", verifyToken, async (req, res) => {
 
 //API FOR USERS AND DEVELOPERS
 //To read profile of users and developers
-app.get("/read/:player_name", verifyToken, async (req, res) => {
+app.get("/read/:player_name", verifyToken,apiRateLimiter, async (req, res) => {
   // Check if the user is authorised to read the player
   if (req.identify.roles == "player" || req.identify.roles == "admin") {
     // Read the information of the player from the database
@@ -1907,7 +1901,7 @@ app.get("/read/:player_name", verifyToken, async (req, res) => {
 });
 
 //Read leaderboard
-app.get("/leaderboard", verifyToken, async (req, res) => {
+app.get("/leaderboard", verifyToken,apiRateLimiter, async (req, res) => {
   if (req.identify.roles == "player" || req.identify.roles == "admin") {
     let leaderboard = await client
       .db("Assignment")
