@@ -19,14 +19,15 @@ const credentials_testing = "D:\\Samuel's work\\coding\\infosec-1\\X509-cert-723
 const credentials = process.env.MONGO_CERT_PATH;
 
 // Convert the values to numbers
-const maxRetries = parseInt(process.env.MAX_RETRIES, 10);
-const timeout = parseInt(process.env.TIMEOUT, 10);
+// const maxRetries = parseInt(process.env.MAX_RETRIES, 10);
+// const timeout = parseInt(process.env.TIMEOUT, 10);
 
 // Rate limit for unauthorized users
 const unauthorizedRateLimiter = rateLimit({
-  windowMs: timeout, 
-  max: maxRetries, 
+  windowMs: process.env.TIMEOUT, //process.env.TIMEOUT or timeout
+  max: process.env.MAX_RETRIES, //process.env.MAX_RETRIES or maxRetries
   message: "Too many requests from this IP, please try again later",
+  
   handler: (req, res, next, options) => {
     res.status(options.statusCode).send({
       message: options.message,
