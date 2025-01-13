@@ -129,7 +129,7 @@ app.post("/adminLogin_test", async (req, res) => {
 
   // Check if all required fields are provided
 //Add a new chest
-app.post("/chests",apiRateLimiter, verifyToken, async (req, res) => {
+app.post("/chests", verifyToken, async (req, res) => {
   //Check if the user is an admin
   if (req.identify.roles == "admin") {
     // Check if chest,price,characters and Max_power_level fields are provided
