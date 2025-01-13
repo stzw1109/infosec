@@ -24,9 +24,16 @@ const timeout = parseInt(process.env.TIMEOUT, 10);
 
 // Rate limit for unauthorized users
 const unauthorizedRateLimiter = rateLimit({
-  windowMs: timeout, // 15 minutes
-  max: maxRetries, // Limit each IP to 10 requests per windowMs
-  message: "Too many requests from this IP, please try again after 15 minutes"
+  windowMs: timeout, 
+  max: maxRetries, 
+  message: "Too many requests from this IP, please try again later",
+  handler: (req, res, next, options) => {
+    res.status(options.statusCode).send({
+      message: options.message,
+      status: options.statusCode,
+      retryAfter: options.windowMs / 1000 // Time in seconds
+    });
+  }
 });
 
 app.use(express.json());
