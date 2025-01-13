@@ -18,18 +18,38 @@ const port = process.env.PORT || 3000;
 const credentials_testing = "D:\\Samuel's work\\coding\\infosec-1\\X509-cert-723266351894110951.pem";
 const credentials = process.env.MONGO_CERT_PATH;
 
+//TEST
+//to be removed
+const maxRetriesLogin = parseInt(process.env.MAX_RETRIES_LOGIN, 10);
+const timeoutLogin = parseInt(process.env.TIMEOUT_LOGIN, 10);
+const maxRetries = parseInt(process.env.MAX_RETRIES, 10);
+const timeout = parseInt(process.env.TIMEOUT, 10);
+
 // Rate limit for unauthorized users
 const login_RateLimiter = rateLimit({
-  windowMs: process.env.TIMEOUT_LOGIN, 
-  max: process.env.MAX_RETRIES_LOGIN, 
+  windowMs: timeoutLogin, // 15 minutes
+  max: maxRetriesLogin, // Limit each IP to 5 login attempts per windowMs
   message: "Please try again later"
 });
-
+// Rate limit for general API usage
 const apiRateLimiter = rateLimit({
-  windowMs: process.env.TIMEOUT, 
-  max: process.env.MAX_RETRIES, 
+  windowMs: timeout, // 2 minutes
+  max: maxRetries, // Limit each IP to 10 requests per windowMs
   message: "Too many requests, please try again shortly"
 });
+
+// // Rate limit for unauthorized users
+// const login_RateLimiter = rateLimit({
+//   windowMs: process.env.TIMEOUT_LOGIN, 
+//   max: process.env.MAX_RETRIES_LOGIN, 
+//   message: "Please try again later"
+// });
+
+// const apiRateLimiter = rateLimit({
+//   windowMs: process.env.TIMEOUT, 
+//   max: process.env.MAX_RETRIES, 
+//   message: "Too many requests, please try again shortly"
+// });
 
 app.use(express.json());
 app.use(express.static("public"));
@@ -1958,7 +1978,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const { message } = require("statuses");
 
 const client = new MongoClient('mongodb+srv://benr2423.jgm92s9.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority&appName=BENR2423', {
-  tlsCertificateKeyFile: credentials,
+  tlsCertificateKeyFile: credentials_testing,
   serverApi: ServerApiVersion.v1
 });
 
