@@ -5,7 +5,7 @@ const bcrypt = require("bcrypt");
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const rateLimit = require('express-rate-limit');
-const fs = require("fs");
+const axios = require("axios");
 const app = express();
 
 //encryption and decryption purpose (dont know got use or not)
@@ -18,8 +18,6 @@ const port = process.env.PORT || 3000;
 const credentials_testing = "D:\\Samuel's work\\coding\\infosec-1\\X509-cert-723266351894110951.pem";
 const credentials = process.env.MONGO_CERT_PATH;
 
-//TEST
-//to be removed
 const maxRetriesLogin = parseInt(process.env.MAX_RETRIES_LOGIN, 10);
 const timeoutLogin = parseInt(process.env.TIMEOUT_LOGIN, 10);
 const maxRetries = parseInt(process.env.MAX_RETRIES, 10);
@@ -27,29 +25,19 @@ const timeout = parseInt(process.env.TIMEOUT, 10);
 
 // Rate limit for unauthorized users
 const login_RateLimiter = rateLimit({
-  windowMs: timeoutLogin, // 15 minutes
-  max: maxRetriesLogin, // Limit each IP to 5 login attempts per windowMs
+  windowMs: timeoutLogin, 
+  max: maxRetriesLogin, 
   message: "Please try again later"
 });
 // Rate limit for general API usage
 const apiRateLimiter = rateLimit({
-  windowMs: timeout, // 2 minutes
-  max: maxRetries, // Limit each IP to 10 requests per windowMs
+  windowMs: timeout, 
+  max: maxRetries, 
   message: "Too many requests, please try again shortly"
 });
 
-// // Rate limit for unauthorized users
-// const login_RateLimiter = rateLimit({
-//   windowMs: process.env.TIMEOUT_LOGIN, 
-//   max: process.env.MAX_RETRIES_LOGIN, 
-//   message: "Please try again later"
-// });
-
-// const apiRateLimiter = rateLimit({
-//   windowMs: process.env.TIMEOUT, 
-//   max: process.env.MAX_RETRIES, 
-//   message: "Too many requests, please try again shortly"
-// });
+const recaptchaSiteKey = process.env.RECAPTCHA_SITE_KEY;
+const recaptchaSecretKey = process.env.RECAPTCHA_SECRET_KEY;
 
 app.use(express.json());
 app.use(express.static("public"));
@@ -57,6 +45,13 @@ app.use(express.static("public"));
 //API FOR ADMIN
 //login for admin
 app.post("/adminLogin",login_RateLimiter, async (req, res) => {
+  const recaptchaToken = req.body['g-recaptcha-response'];
+  const isHuman = await verifyRecaptchaToken(recaptchaToken);
+
+  if (!isHuman) {
+    return res.status(400).send("reCAPTCHA verification failed. Please try again.");
+  }
+
   // Check if all required fields are provided
   if (!req.body.name || !req.body.email) {
     return res.status(400).send("name and email are required. ( ˘ ³˘)❤");
@@ -85,7 +80,7 @@ app.post("/adminLogin",login_RateLimiter, async (req, res) => {
           process.env.JWT_SECRET,
           { expiresIn: "1h" }
         );
-        console.log(token);
+        
         res.status(200).send({
           message:
             "Admin login successful. Do yer thang in the admin panel!!\n(っ＾▿＾)۶🍸🌟🍺٩(˘◡˘ )",
@@ -130,7 +125,7 @@ app.post("/adminLogin_test", async (req, res) => {
           process.env.JWT_SECRET,
           { expiresIn: "1h" }
         );
-        console.log(token);
+        
         res.status(200).send({
           message:
             "Admin login successful. Do yer thang in the admin panel!!\n(っ＾▿＾)۶🍸🌟🍺٩(˘◡˘ )",
@@ -642,6 +637,12 @@ app.post("/register_test", async (req, res) => {
  
 //login for users
 app.post("/userLogin",login_RateLimiter, async (req, res) => {
+  const recaptchaToken = req.body['g-recaptcha-response'];
+  const isHuman = await verifyRecaptchaToken(recaptchaToken);
+
+  if (!isHuman) {
+    return res.status(400).send("reCAPTCHA verification failed. Please try again.");
+  }
   // Check if name and email fields are provided
   if (!req.body.name || !req.body.email) {
     //if not provided, return an error
@@ -672,7 +673,7 @@ app.post("/userLogin",login_RateLimiter, async (req, res) => {
           process.env.JWT_SECRET,
           { expiresIn: "1h" }
         );
-        console.log(token);
+        
         res.status(200).send({
           message:
             "Login successful. Remember to gain your starter pack!\n(っ＾▿＾)۶🍸🌟🍺٩(˘◡˘ )",
@@ -1966,9 +1967,71 @@ app.get("/leaderboard", verifyToken,apiRateLimiter, async (req, res) => {
   }
 });
 
-app.get("/", (req, res) => {
-  res.send("FOR BATTLE!!!");
-})
+// app.get("/", (req, res) => {
+//   res.send("FOR BATTLE!!!");
+// })
+
+app.get('/', (req, res) => {
+  res.send(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FOR BATTLE!!!</title>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <style>
+        body{
+          background-color: #f0f0f0;
+          font-family: Arial, sans-serif;
+        }
+
+        h1{
+            padding-top: 150px;
+            padding-bottom: 40px;
+            font-size: 80px;            
+        }
+        p{
+          font-size: 40px;
+          padding-top: 200px;
+          align-self:bottom ;
+        }
+        .g-recaptcha {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            transform: scale(1.5);
+
+        }
+        input{
+          display: center;
+          align-items: top;
+          margin: 0;
+          margin-top: 30px;
+          font-size: 28px;
+        }
+        .container {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FOR BATTLE!!!</h1>
+        <form id="loginForm" action="/userLogin" method="POST">
+          <div class="g-recaptcha" data-sitekey="${recaptchaSiteKey}"></div><br>
+          <input type="submit" value="Submit">
+        </form>
+    </div>
+
+    <p>NOTE: Don't press the Submit button. Get the g-recaptcha-response from the "Inspect" tab and paste it into the POSTMAN form.</p>
+</body>
+</html>
+  `);
+});
+
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
@@ -1978,7 +2041,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const { message } = require("statuses");
 
 const client = new MongoClient('mongodb+srv://benr2423.jgm92s9.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority&appName=BENR2423', {
-  tlsCertificateKeyFile: credentials,
+  tlsCertificateKeyFile: credentials_testing,
   serverApi: ServerApiVersion.v1
 });
 
@@ -1993,6 +2056,12 @@ const client = new MongoClient('mongodb+srv://benr2423.jgm92s9.mongodb.net/?auth
 //     deprecationErrors: true,
 //   },
 // });
+
+// Function to verify reCAPTCHA token
+async function verifyRecaptchaToken(token) {
+  const response = await axios.post(`https://www.google.com/recaptcha/api/siteverify?secret=${recaptchaSecretKey}&response=${token}`);
+  return response.data.success;
+}
 
 //list of functions
 function verifyToken(req, res, next) {
