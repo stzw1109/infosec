@@ -8,11 +8,6 @@ const rateLimit = require('express-rate-limit');
 const axios = require("axios");
 const helmet = require("helmet");
 const app = express();
-
-//encryption and decryption purpose (dont know got use or not)
-const algorithm = 'aes-256-cbc';
-const key = crypto.randomBytes(32);
-const iv = crypto.randomBytes(16);
 const port = process.env.PORT || 3000;
 
 //variable testing
@@ -2083,22 +2078,6 @@ function verifyToken(req, res, next) {
 
     next();
   });
-}
-
- function encryption(text) {
-   let cipher = crypto.createCipheriv(algorithm, Buffer.from(key), iv);
-   let encrypted = cipher.update(text);
-   encrypted = Buffer.concat([encrypted, cipher.final()]);
-   return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
- }
-
-function decryption(text) {
-  let iv = Buffer.from(text.iv, 'hex');
-  let encryptedText = Buffer.from(text.encryptedData, 'hex');
-  let decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), iv);
-  let decrypted = decipher.update(encryptedText);
-  decrypted = Buffer.concat([decrypted, decipher.final()]);
-  return decrypted.toString();
 }
 
 function passwordValidation(password){
