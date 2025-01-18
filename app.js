@@ -1980,9 +1980,6 @@ app.get("/leaderboard", verifyToken,apiRateLimiter, async (req, res) => {
   }
 });
 
-// app.get("/", (req, res) => {
-//   res.send("FOR BATTLE!!!");
-// })
 
 app.get('/', (req, res) => {
   res.send(`
