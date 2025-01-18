@@ -1,6 +1,5 @@
 require("dotenv").config();
 
-const crypto = require("crypto");// might remove
 const bcrypt = require("bcrypt");
 const express = require("express");
 const jwt = require("jsonwebtoken");
@@ -39,7 +38,7 @@ const recaptchaSecretKey = process.env.RECAPTCHA_SECRET_KEY;
 app.use(express.json());
 app.use(express.static("public"));
 app.use(helmet());
-app.use(cookieParser());
+
 
 //API FOR ADMIN
 //login for admin
