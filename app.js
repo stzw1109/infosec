@@ -6,6 +6,7 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const rateLimit = require('express-rate-limit');
 const axios = require("axios");
+const helmet = require("helmet");
 const app = express();
 
 //encryption and decryption purpose (dont know got use or not)
@@ -41,6 +42,7 @@ const recaptchaSecretKey = process.env.RECAPTCHA_SECRET_KEY;
 
 app.use(express.json());
 app.use(express.static("public"));
+app.use(helmet());
 
 //API FOR ADMIN
 //login for admin
