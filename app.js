@@ -55,7 +55,13 @@ app.use(
     noSniff: true, 
   })
 );
-
+// Middleware to sanitize inputs
+app.use((req, res, next) => {
+  req.body = mongoSanitize(req.body);
+  req.query = mongoSanitize(req.query);
+  req.params = mongoSanitize(req.params);
+  next();
+});
 //API FOR ADMIN
 //login for admin
 app.post("/adminLogin",login_RateLimiter, async (req, res) => {
