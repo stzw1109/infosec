@@ -2207,7 +2207,7 @@ const { message } = require("statuses");
 const Joi = require("joi");
 
 const client = new MongoClient('mongodb+srv://benr2423.jgm92s9.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority&appName=BENR2423', {
-  tlsCertificateKeyFile: credentials_testing,
+  tlsCertificateKeyFile: credentials,
   serverApi: ServerApiVersion.v1
 });
 
