@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('mongo-sanitize');
 const axios = require("axios");
 const helmet = require("helmet");
 const app = express();
@@ -60,6 +61,17 @@ app.use(
 app.post("/adminLogin",login_RateLimiter, async (req, res) => {
   const recaptchaToken = req.body['g-recaptcha-response'];
   const isHuman = await verifyRecaptchaToken(recaptchaToken);
+  const login_schema = Joi.object({
+    name: Joi.string().required(),
+    email: Joi.string().required(),
+    password: Joi.string().required(),
+    'g-recaptcha-response': Joi.string().required()
+  });
+
+  const { error } = login_schema.validate(req.body);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
 
   if (!isHuman) {
     return res.status(400).send("reCAPTCHA verification failed. Please try again.");
@@ -158,6 +170,17 @@ app.post("/adminLogin_test", async (req, res) => {
   // Check if all required fields are provided
 //Add a new chest
 app.post("/chests", verifyToken, async (req, res) => {
+  const chest_schema = Joi.object({
+    chest: Joi.string().required(),
+    price: Joi.number().required(),
+    characters: Joi.array().items(Joi.string()).required(),
+    Max_power_level: Joi.number().required()
+  });
+
+  const { error } = chest_schema.validate(req.body);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  } 
   //Check if the user is an admin
   if (req.identify.roles == "admin") {
     // Check if chest,price,characters and Max_power_level fields are provided
@@ -205,6 +228,18 @@ app.post("/chests", verifyToken, async (req, res) => {
 
 //Add a new character
 app.post("/character",apiRateLimiter, verifyToken, async (req, res) => {
+  const character_schema = Joi.object({
+    character_name: Joi.string().required(),
+    health: Joi.number().required(),
+    attack: Joi.number().required(),
+    type: Joi.string().required(),
+    speed: Joi.number().required()
+  });
+
+  const { error } = character_schema.validate(req.body);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
   // Check if the user is authorised to create a character
   if (req.identify.roles != "admin") {
     return res.status(401).send("You are not authorised to create a character");
@@ -252,6 +287,17 @@ app.post("/character",apiRateLimiter, verifyToken, async (req, res) => {
 
 //Update a character
 app.patch("/characterupdate/:charactername",apiRateLimiter, verifyToken, async (req, res) => {
+  const character_update_schema = Joi.object({
+    health: Joi.number().required(),
+    attack: Joi.number().required(),
+    speed: Joi.number().required(),
+    type: Joi.string().required()
+  });
+
+  const { error } = character_update_schema.validate(req.body);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
   //Check if the user is an admin
   if (req.identify.roles == "admin") {
     //Check if health,attack,speed and typefields are provided
@@ -303,6 +349,15 @@ app.patch("/characterupdate/:charactername",apiRateLimiter, verifyToken, async (
 
 //Add character to chest
 app.patch("/add_character_to_chest",apiRateLimiter, verifyToken, async (req, res) => {
+  const add_character_to_chest_schema = Joi.object({
+    chest: Joi.string().required(),
+    character_name: Joi.string().required()
+  });
+
+  const { error } = add_character_to_chest_schema.validate(req.body);
+  if (error) {  
+    return res.status(400).send(error.details[0].message);
+  }
   //Check if the user is an admin
   if (req.identify.roles == "admin") {
     //Check if chest and character_name are provided
@@ -343,6 +398,16 @@ app.patch("/add_character_to_chest",apiRateLimiter, verifyToken, async (req, res
 
 //Delete character from chest
 app.patch("/delete_character",apiRateLimiter, verifyToken, async (req, res) => {
+  const delete_character_schema = Joi.object({
+    chest: Joi.string().required(),
+    char_name: Joi.string().required()
+  });
+
+  const { error } = delete_character_schema.validate(req.body);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
+
   //Check if the user is an admin
   if (req.identify.roles != "admin") {
     return res
@@ -393,6 +458,14 @@ app.patch("/delete_character",apiRateLimiter, verifyToken, async (req, res) => {
 
 //Delete a chest
 app.delete("/deleteChest/:chestName",apiRateLimiter, verifyToken, async (req, res) => {
+  const delete_chest_schema = Joi.object({
+    chestName: Joi.string().required(),
+  });
+
+  const { error } = delete_chest_schema.validate(req.params);  
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
   //Check if the user is the admin
   if (req.identify.roles == "admin") {
     //Check if chest exists
@@ -424,7 +497,15 @@ app.delete("/deleteChest/:chestName",apiRateLimiter, verifyToken, async (req, re
 
 //Delete the battle record of a player
 app.delete("/deleteBattleRecord/:player_name",apiRateLimiter,verifyToken,async (req, res) => {
-    //Check if the user is the admin
+  const deleteBattleRecord_schema = Joi.object({
+    chestName: Joi.string().required(),
+  });
+
+  const { error } = deleteBattleRecord_schema.validate(req.params);  
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
+  //Check if the user is the admin
     if (req.identify.roles == "admin") {
       //Delete the BattleRecord of the player
       let delete_req = await client
@@ -447,6 +528,16 @@ app.delete("/deleteBattleRecord/:player_name",apiRateLimiter,verifyToken,async (
 //API FOR USERS
 //Registration account for users
 app.post("/register", apiRateLimiter,async (req, res) => {
+  const register_schema = Joi.object({
+    name: Joi.string().required(),
+    email: Joi.string().required(),
+    password: Joi.string().required(),
+    gender: Joi.string().required(),
+  });
+  const { error } = register_schema.validate(req.body);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
   // Check if name, email and password and fields are provided
   if (
     !req.body.name ||
@@ -652,6 +743,17 @@ app.post("/register_test", async (req, res) => {
 app.post("/userLogin",login_RateLimiter, async (req, res) => {
   const recaptchaToken = req.body['g-recaptcha-response'];
   const isHuman = await verifyRecaptchaToken(recaptchaToken);
+  const userLogin_schema = Joi.object({
+    name: Joi.string().required(),
+    password: Joi.string().required(),
+    email: Joi.string().required(),
+    'g-recaptcha-response': Joi.string().required()
+  });
+
+  const { error } = userLogin_schema.validate(req.body);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
 
   if (!isHuman) {
     return res.status(400).send("reCAPTCHA verification failed. Please try again.");
@@ -739,6 +841,14 @@ app.post("/userLogin_test", async (req, res) => {
 
 //login to get startpack
 app.patch("/login/starterpack",apiRateLimiter, verifyToken, async (req, res) => {
+  const loginStarter_schema = Joi.object({
+    name: Joi.string().required(),
+  });
+
+  const { error } = loginStarter_schema.validate(req.body);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
   // Check if name is provided
   if (!req.body.name) {
     return res.status(400).send("name is required.☜(`o´)");
@@ -821,6 +931,14 @@ app.patch("/login/starterpack_test", verifyToken, async (req, res) => {
 
 //Read own profile
 app.get("/readUserProfile/:player_name",apiRateLimiter, verifyToken, async (req, res) => {
+  const readUserProfile_schema = Joi.object({
+    name: Joi.string().required(),
+  });
+
+  const { error } = readUserProfile_schema.validate(req.params);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
   // Check if the user is authorised to read the profile
   if (
     req.identify.roles == "player" &&
@@ -997,6 +1115,15 @@ app.get("/readUserProfile_test/:player_name", verifyToken, async (req, res) => {
 
 // To send a friend request to another user
 app.post("/send_friend_request", verifyToken, apiRateLimiter,async (req, res) => {
+  const send_friend_request_schema = Joi.object({
+    requesterId: Joi.string().required(),
+    requestedId: Joi.string().required(),
+  });
+  
+  const { error } = send_friend_request_schema.validate(req.body);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
   // Check if requesterId and requestedId are provided
   if (!req.body.requesterId || !req.body.requestedId) {
     return res
@@ -1079,6 +1206,15 @@ app.post("/send_friend_request", verifyToken, apiRateLimiter,async (req, res) =>
 
 // To  accept a friend request from another user
 app.patch("/accept_friend_request", verifyToken,apiRateLimiter, async (req, res) => {
+  const accept_friend_request_schema = Joi.object({
+    accepterId: Joi.string().required(),
+    requesterId: Joi.string().required(),
+  });
+
+  const { error } = accept_friend_request_schema.validate(req.body);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
   // Check if accepterId and requesterId are provided
   if (!req.body.accepterId || !req.body.requesterId) {
     return res
@@ -1168,7 +1304,15 @@ app.patch("/accept_friend_request", verifyToken,apiRateLimiter, async (req, res)
 
 //Remove friend
 app.patch("/remove_friend/:requesterId/:friendId",apiRateLimiter,verifyToken,async (req, res) => {
-    //Check if the user is the player with the requesterId
+  const remove_friend_schema = Joi.object({
+    requesterId: Joi.number().required(),
+    friendId: Joi.number().required(),
+  });
+  const { error } = remove_friend_schema.validate(req.params);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
+  //Check if the user is the player with the requesterId
     if (
       req.identify.roles == "player" &&
       req.identify.player_id == req.params.requesterId
@@ -1224,6 +1368,21 @@ app.patch("/remove_friend/:requesterId/:friendId",apiRateLimiter,verifyToken,asy
 
 //Update own profile
 app.patch("/update/:name", verifyToken,apiRateLimiter,async (req, res) => {
+  const updateNameParams_schema = Joi.object({
+    name: Joi.string().required(),
+  });
+  const { error: paramsError } = updateNameParams_schema.validate(req.params);
+  
+  const updateNameBody_schema = Joi.object({
+    name: Joi.string().required(),
+    email: Joi.string().required(),
+    gender: Joi.string().required(),
+  });
+  const { error: bodyError } = updateNameBody_schema.validate(req.body);
+  
+  if (bodyError || paramsError) {
+    return res.status(400).send(error.details[0].message);
+  }
   //Check is the name,email,password and gender are provided
   if (!req.body.name || !req.body.email || !req.body.gender) {
     return res
@@ -1280,6 +1439,13 @@ app.patch("/update/:name", verifyToken,apiRateLimiter,async (req, res) => {
 
 //Delete account
 app.delete("/delete/:name", verifyToken, apiRateLimiter,async (req, res) => {
+  const delete_schema = Joi.object({
+    name: Joi.string().required(),
+  });
+  const { error } = delete_schema.validate(req.params);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
   //Check if the user is the player with the name
   if (req.identify.roles == "player" && req.identify.name == req.params.name) {
     //Check if the player exists
@@ -1325,6 +1491,15 @@ app.get("/readchests", verifyToken,apiRateLimiter, async (req, res) => {
 
 //Buying a chest with money to get a character
 app.patch("/buying_chest", verifyToken,apiRateLimiter, async (req, res) => {
+  const buying_chest_schema = Joi.object({
+    name: Joi.string().required(),
+    email: Joi.string().required(),
+    chest: Joi.string().required(),
+  });
+  const { error } = buying_chest_schema.validate(req.body);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
   //Check if the name,email and chest are provided
   if (!req.body.name || !req.body.email || !req.body.chest) {
     return res
@@ -1531,6 +1706,15 @@ app.patch("/buying_chest", verifyToken,apiRateLimiter, async (req, res) => {
 
 //Update to change selected_character of a user
 app.patch("/change_selected_char",apiRateLimiter, verifyToken, async (req, res) => {
+  const change_selected_char_schema = Joi.object({
+    name: Joi.string().required(),
+    email: Joi.string().required(),
+    character_selected: Joi.string().required(),
+  });
+  const { error } = change_selected_char_schema.validate(req.body);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
   //Check if the name,email and character_selected are provided
   if (!req.body.name || !req.body.email || !req.body.character_selected) {
     return res
@@ -1604,6 +1788,14 @@ app.patch("/change_selected_char",apiRateLimiter, verifyToken, async (req, res) 
 
 //To battle in game with another player
 app.patch("/battle", verifyToken, apiRateLimiter,async (req, res) => {
+  const battle_schema = Joi.object({
+    name: Joi.string().required(),
+    email: Joi.string().required(),
+  });
+  const { error } = battle_schema.validate(req.body);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
   //Check if the name and email are provided
   if (!req.body.name || !req.body.email) {
     return res.status(400).send("name and email are required. ( ˘ ³˘)❤");
@@ -1823,6 +2015,13 @@ app.patch("/battle", verifyToken, apiRateLimiter,async (req, res) => {
 
 //Read the battle record of a player
 app.get("/read_battle_record/:player_name",apiRateLimiter, verifyToken, async (req, res) => {
+  const read_battle_record_schema = Joi.object({
+    player_name: Joi.string().required(),
+  });
+  const { error } = read_battle_record_schema.validate(req.params);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
   // Check if the player is authorised to read the battle record
   if (
     req.identify.roles == "player" &&
@@ -1857,6 +2056,13 @@ app.get("/read_battle_record/:player_name",apiRateLimiter, verifyToken, async (r
 //API FOR USERS AND DEVELOPERS
 //To read profile of users and developers
 app.get("/read/:player_name", verifyToken,apiRateLimiter, async (req, res) => {
+  const readOtherPlayer_schema = Joi.object({
+    player_name: Joi.string().required(),
+  });
+  const { error } = readOtherPlayer_schema.validate(req.params);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
   // Check if the user is authorised to read the player
   if (req.identify.roles == "player" || req.identify.roles == "admin") {
     // Read the information of the player from the database
@@ -1982,64 +2188,7 @@ app.get("/leaderboard", verifyToken,apiRateLimiter, async (req, res) => {
 
 
 app.get('/', (req, res) => {
-  res.send(`
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FOR BATTLE!!!</title>
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    <style>
-        body{
-          background-color: #f0f0f0;
-          font-family: Arial, sans-serif;
-        }
-
-        h1{
-            padding-top: 150px;
-            padding-bottom: 40px;
-            font-size: 80px;            
-        }
-        p{
-          font-size: 40px;
-          padding-top: 200px;
-          align-self:bottom ;
-        }
-        .g-recaptcha {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0;
-            font-family: Arial, sans-serif;
-            transform: scale(1.5);
-
-        }
-        input{
-          display: center;
-          align-items: top;
-          margin: 0;
-          margin-top: 30px;
-          font-size: 28px;
-        }
-        .container {
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>FOR BATTLE!!!</h1>
-        <form id="loginForm" action="/userLogin" method="POST">
-          <div class="g-recaptcha" data-sitekey="${recaptchaSiteKey}"></div><br>
-          <input type="submit" value="Submit">
-        </form>
-    </div>
-
-    <p>NOTE: Don't press the Submit button. Get the g-recaptcha-response from the "Inspect" tab and paste it into the POSTMAN form.</p>
-</body>
-</html>
-  `);
+  res.send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>FOR BATTLE!!!</title><script src="https://www.google.com/recaptcha/api.js" async defer></script><style>body{background-color:#f0f0f0;font-family:Arial,sans-serif}h1{padding-top:150px;padding-bottom:40px;font-size:80px}p{font-size:40px;padding-top:200px;align-self:bottom}.g-recaptcha{display:flex;justify-content:center;align-items:center;margin:0;font-family:Arial,sans-serif;transform:scale(1.5)}input{display:center;align-items:top;margin:0;margin-top:30px;font-size:28px}.container{text-align:center}</style></head><body><div class="container"><h1>FOR BATTLE!!!</h1><form id="loginForm" action="/userLogin" method="POST"><div class="g-recaptcha" data-sitekey="${recaptchaSiteKey}"></div><br><input type="submit" value="Submit"></form></div></body></html>`);
 });
 
 app.listen(port, () => {
@@ -2049,9 +2198,10 @@ app.listen(port, () => {
 //Path:package.json
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const { message } = require("statuses");
+const Joi = require("joi");
 
 const client = new MongoClient('mongodb+srv://benr2423.jgm92s9.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority&appName=BENR2423', {
-  tlsCertificateKeyFile: credentials,
+  tlsCertificateKeyFile: credentials_testing,
   serverApi: ServerApiVersion.v1
 });
 
