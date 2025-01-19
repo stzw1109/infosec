@@ -38,23 +38,23 @@ const recaptchaSecretKey = process.env.RECAPTCHA_SECRET_KEY;
 //app use stuff
 app.use(express.json());
 app.use(express.static("public"));
-// app.use(
-//   helmet({
-//     contentSecurityPolicy: {
-//       directives: {
-//         defaultSrc: ["'self'"],
-//         scriptSrc: ["'self'", "https://www.google.com", "https://www.gstatic.com"], 
-//         frameSrc: ["https://www.google.com"], 
-//       },
-//     },
-//     referrerPolicy: { policy: "no-referrer" }, 
-//     crossOriginEmbedderPolicy: false, 
-//     crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }, 
-//     hidePoweredBy: true, 
-//     xssFilter: false, 
-//     noSniff: true, 
-//   })
-// );
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "https://www.google.com", "https://www.gstatic.com"], 
+        frameSrc: ["https://www.google.com"], 
+      },
+    },
+    referrerPolicy: { policy: "no-referrer" }, 
+    crossOriginEmbedderPolicy: false, 
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }, 
+    hidePoweredBy: true, 
+    xssFilter: false, 
+    noSniff: true, 
+  })
+);
 // Middleware to sanitize inputs
 app.use((req, res, next) => {
   req.body = mongoSanitize(req.body);
