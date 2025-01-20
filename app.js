@@ -4,8 +4,8 @@ const bcrypt = require("bcrypt");
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const Joi = require("joi");
-// const path = require('path');
-// const fs = require('fs');
+const path = require('path');
+const fs = require('fs');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('mongo-sanitize');
 const axios = require("axios");
@@ -23,14 +23,20 @@ const maxRetries = parseInt(process.env.MAX_RETRIES, 10);
 const timeout = parseInt(process.env.TIMEOUT, 10);
 
 //testing
+const privateKeyPath = path.join(process.env.JWT_KEY_PATH, process.env.JWT_PRIVATE_KEY);
+const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
+
+const publicKeyPath = path.join(process.env.JWT_KEY_PATH, process.env.JWT_PUBLIC_KEY);
+const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
+
 // const privateKeyPath = path.join("D:\\Samuel's work\\coding\\infosec-1", "decrypted_private.key");
 // const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
 
 // const publicKeyPath = path.join("D:\\Samuel's work\\coding\\infosec-1", "public.key");
 // const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
 
-const privateKey = process.env.JWT_PRIVATE_KEY_PATH;
-const publicKey = process.env.JWT_PUBLIC_KEY_PATH;
+// const privateKey = process.env.JWT_PRIVATE_KEY_PATH;
+// const publicKey = process.env.JWT_PUBLIC_KEY_PATH;
 
 // Rate limit for unauthorized users
 const login_RateLimiter = rateLimit({
@@ -2220,7 +2226,7 @@ const { message } = require("statuses");
 
 
 const client = new MongoClient('mongodb+srv://benr2423.jgm92s9.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority&appName=BENR2423', {
-  tlsCertificateKeyFile: credentials,
+  tlsCertificateKeyFile: credentials_testing,
   serverApi: ServerApiVersion.v1
 });
 
