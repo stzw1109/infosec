@@ -14,7 +14,6 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 //variable testing
-const credentials_testing = "D:\\Samuel's work\\coding\\infosec-1\\X509-cert-723266351894110951.pem";
 const credentials = process.env.MONGO_CERT_PATH;
 
 const maxRetriesLogin = parseInt(process.env.MAX_RETRIES_LOGIN, 10);
@@ -28,15 +27,6 @@ const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
 
 const publicKeyPath = path.join(process.env.JWT_KEY_PATH, process.env.JWT_PUBLIC_KEY);
 const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
-
-// const privateKeyPath = path.join("D:\\Samuel's work\\coding\\infosec-1", "decrypted_private.key");
-// const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
-
-// const publicKeyPath = path.join("D:\\Samuel's work\\coding\\infosec-1", "public.key");
-// const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
-
-// const privateKey = process.env.JWT_PRIVATE_KEY_PATH;
-// const publicKey = process.env.JWT_PUBLIC_KEY_PATH;
 
 // Rate limit for unauthorized users
 const login_RateLimiter = rateLimit({
