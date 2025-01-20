@@ -15,7 +15,8 @@
     "mongo-sanitize": "^1.1.0",
     "mongodb": "^6.12.0",
     "mongoose": "^8.9.2",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "path": "^0.12.7"
   },
   "scripts": {
     "start": "node app.js"

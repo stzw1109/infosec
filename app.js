@@ -3,6 +3,8 @@ require("dotenv").config();
 const bcrypt = require("bcrypt");
 const express = require("express");
 const jwt = require("jsonwebtoken");
+const path = require('path');
+const fs = require('fs');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('mongo-sanitize');
 const axios = require("axios");
@@ -18,6 +20,20 @@ const maxRetriesLogin = parseInt(process.env.MAX_RETRIES_LOGIN, 10);
 const timeoutLogin = parseInt(process.env.TIMEOUT_LOGIN, 10);
 const maxRetries = parseInt(process.env.MAX_RETRIES, 10);
 const timeout = parseInt(process.env.TIMEOUT, 10);
+
+//testing
+// const privateKeyPath = path.join("D:\\Samuel's work\\coding\\infosec-1", "decrypted_private.key");
+// const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
+
+// const publicKeyPath = path.join("D:\\Samuel's work\\coding\\infosec-1", "public.key");
+// const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
+
+//actual
+const privateKeyPath = path.join(process.env.JWT_KEY_PATH, process.env.PRIVATE_KEY);
+const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
+
+const publicKeyPath = path.join(process.env.JWT_KEY_PATH, process.env.PUBLIC_KEY);
+const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
 
 // Rate limit for unauthorized users
 const login_RateLimiter = rateLimit({
@@ -108,8 +124,8 @@ app.post("/adminLogin",login_RateLimiter, async (req, res) => {
             email: resp.email,
             roles: resp.roles,
           },
-          process.env.JWT_SECRET,
-          { expiresIn: "1h" }
+          privateKey,
+          { algorithm:'RS256',expiresIn: "1h" }
         );
         
         res.status(200).send({
@@ -153,8 +169,8 @@ app.post("/adminLogin_test", async (req, res) => {
             email: resp.email,
             roles: resp.roles,
           },
-          process.env.JWT_SECRET,
-          { expiresIn: "1h" }
+          privateKey,
+          { algorithm:'RS256',expiresIn: "1h" }
         );
         
         res.status(200).send({
@@ -791,8 +807,8 @@ app.post("/userLogin",login_RateLimiter, async (req, res) => {
             email: resp.email,
             roles: resp.roles,
           },
-          process.env.JWT_SECRET,
-          { expiresIn: "1h" }
+          privateKey,
+          { algorithm:'RS256',expiresIn: "1h" }
         );
         
         res.status(200).send({
@@ -1429,8 +1445,8 @@ app.patch("/update/:name", verifyToken,apiRateLimiter,async (req, res) => {
           email: result.email,
           roles: result.roles,
         },
-        process.env.JWT_SECRET,
-        { expiresIn: "1h" }
+        privateKey,
+        { algorithm:'RS256',expiresIn: "1h" }
       );
       res.send({
         message: "Profile updated successfully 🍲_(ﾟ◇ﾟ；)ノﾞ",
@@ -2236,7 +2252,7 @@ function verifyToken(req, res, next) {
   //split "Bearer <decode>"-->To take only decode
   if (token == null) return res.sendStatus(401);
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+  jwt.verify(token, publicKey,{algorithms: ['RS256']}, (err, decoded) => {
     console.log(err);
 
     if (err) return res.sendStatus(403);
@@ -2246,6 +2262,21 @@ function verifyToken(req, res, next) {
     next();
   });
 }
+
+// function verifyToken(req, res, next) {
+//   const token = req.headers['authorization']?.split(' ')[1];
+//   if (!token) {
+//     return res.status(401).json({ error: 'Token missing' });
+//   }
+
+//   try {
+//     const decoded = jwt.verify(token, process.env.JWT_PUBLIC,{algorithms: ['RS256']});
+//     req.user = decoded; // Attach decoded payload to the request
+//     next();
+//   } catch (err) {
+//     res.status(403).json({ error: err.message });
+//   }
+// }
 
 function passwordValidation(password){
   const minLength = 8;
@@ -2267,6 +2298,7 @@ function passwordValidation(password){
   }
 
 }
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
