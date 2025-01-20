@@ -28,13 +28,6 @@ const timeout = parseInt(process.env.TIMEOUT, 10);
 // const publicKeyPath = path.join("D:\\Samuel's work\\coding\\infosec-1", "public.key");
 // const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
 
-//actual
-// const privateKeyPath = path.join(process.env.JWT_KEY_PATH, process.env.PRIVATE_KEY);
-// const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
-
-// const publicKeyPath = path.join(process.env.JWT_KEY_PATH, process.env.PUBLIC_KEY);
-// const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
-
 const privateKey = process.env.JWT_PRIVATE_KEY_PATH;
 const publicKey = process.env.JWT_PUBLIC_KEY_PATH;
 
