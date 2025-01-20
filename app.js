@@ -3,8 +3,8 @@ require("dotenv").config();
 const bcrypt = require("bcrypt");
 const express = require("express");
 const jwt = require("jsonwebtoken");
-const path = require('path');
-const fs = require('fs');
+// const path = require('path');
+// const fs = require('fs');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('mongo-sanitize');
 const axios = require("axios");
@@ -29,11 +29,14 @@ const timeout = parseInt(process.env.TIMEOUT, 10);
 // const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
 
 //actual
-const privateKeyPath = path.join(process.env.JWT_KEY_PATH, process.env.PRIVATE_KEY);
-const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
+// const privateKeyPath = path.join(process.env.JWT_KEY_PATH, process.env.PRIVATE_KEY);
+// const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
 
-const publicKeyPath = path.join(process.env.JWT_KEY_PATH, process.env.PUBLIC_KEY);
-const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
+// const publicKeyPath = path.join(process.env.JWT_KEY_PATH, process.env.PUBLIC_KEY);
+// const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
+
+const privateKey = process.env.JWT_PRIVATE_KEY_PATH;
+const publicKey = process.env.JWT_PUBLIC_KEY_PATH;
 
 // Rate limit for unauthorized users
 const login_RateLimiter = rateLimit({
