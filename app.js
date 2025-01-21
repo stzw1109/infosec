@@ -2246,40 +2246,6 @@ function verifyToken(req, res, next) {
     next();
   });
 }
-// function validateKey(secretOrPublicKey) {
-//   if (secretOrPublicKey != null && !(secretOrPublicKey instanceof KeyObject)) {
-//     try {
-//       // Try to create a public key
-//       secretOrPublicKey = createPublicKey(secretOrPublicKey);
-//     } catch (_) {
-//       try {
-//         // Try to create a secret key
-//         secretOrPublicKey = createSecretKey(
-//           typeof secretOrPublicKey === 'string' ? Buffer.from(secretOrPublicKey) : secretOrPublicKey
-//         );
-//       } catch (_) {
-//         throw new Error('secretOrPublicKey is not valid key material');
-//       }
-//     }
-//   }
-//   return secretOrPublicKey;
-// }
-
-// function verifyToken(req, res, next) {
-//   const token = req.headers['authorization']?.split(' ')[1];
-//   if (!token) {
-//     return res.status(401).json({ error: 'Token missing' });
-//   }
-
-//   try {
-//     const secretOrPublicKey = validateKey(process.env.JWT_SECRET || 'your-default-key'); // Replace with your actual secret/public key
-//     const decoded = jwt.verify(token, secretOrPublicKey);
-//     req.user = decoded; // Attach decoded payload to the request
-//     next();
-//   } catch (err) {
-//     res.status(403).json({ error: err.message });
-//   }
-// }
 
 function passwordValidation(password){
   const minLength = 8;
