@@ -3,9 +3,6 @@ require("dotenv").config();
 const bcrypt = require("bcrypt");
 const express = require("express");
 const jwt = require("jsonwebtoken");
-const Joi = require("joi");
-const path = require('path');
-const fs = require('fs');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('mongo-sanitize');
 const axios = require("axios");
@@ -14,19 +11,13 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 //variable testing
+const credentials_testing = "D:\\Samuel's work\\coding\\infosec-1\\X509-cert-723266351894110951.pem";
 const credentials = process.env.MONGO_CERT_PATH;
 
 const maxRetriesLogin = parseInt(process.env.MAX_RETRIES_LOGIN, 10);
 const timeoutLogin = parseInt(process.env.TIMEOUT_LOGIN, 10);
 const maxRetries = parseInt(process.env.MAX_RETRIES, 10);
 const timeout = parseInt(process.env.TIMEOUT, 10);
-
-//testing
-const privateKeyPath = path.join(process.env.JWT_KEY_PATH, process.env.JWT_PRIVATE_KEY);
-const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
-
-const publicKeyPath = path.join(process.env.JWT_KEY_PATH, process.env.JWT_PUBLIC_KEY);
-const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
 
 // Rate limit for unauthorized users
 const login_RateLimiter = rateLimit({
@@ -117,8 +108,8 @@ app.post("/adminLogin",login_RateLimiter, async (req, res) => {
             email: resp.email,
             roles: resp.roles,
           },
-          privateKey,
-          { algorithm:'RS256',expiresIn: "1h" }
+          process.env.JWT_SECRET,
+          { expiresIn: "1h" }
         );
         
         res.status(200).send({
@@ -162,8 +153,8 @@ app.post("/adminLogin_test", async (req, res) => {
             email: resp.email,
             roles: resp.roles,
           },
-          privateKey,
-          { algorithm:'RS256',expiresIn: "1h" }
+          process.env.JWT_SECRET,
+          { expiresIn: "1h" }
         );
         
         res.status(200).send({
@@ -800,8 +791,8 @@ app.post("/userLogin",login_RateLimiter, async (req, res) => {
             email: resp.email,
             roles: resp.roles,
           },
-          privateKey,
-          { algorithm:'RS256',expiresIn: "1h" }
+          process.env.JWT_SECRET,
+          { expiresIn: "1h" }
         );
         
         res.status(200).send({
@@ -1438,8 +1429,8 @@ app.patch("/update/:name", verifyToken,apiRateLimiter,async (req, res) => {
           email: result.email,
           roles: result.roles,
         },
-        privateKey,
-        { algorithm:'RS256',expiresIn: "1h" }
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
       );
       res.send({
         message: "Profile updated successfully 🍲_(ﾟ◇ﾟ；)ノﾞ",
@@ -2213,7 +2204,7 @@ app.listen(port, () => {
 //Path:package.json
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const { message } = require("statuses");
-
+const Joi = require("joi");
 
 const client = new MongoClient('mongodb+srv://benr2423.jgm92s9.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority&appName=BENR2423', {
   tlsCertificateKeyFile: credentials,
@@ -2245,7 +2236,7 @@ function verifyToken(req, res, next) {
   //split "Bearer <decode>"-->To take only decode
   if (token == null) return res.sendStatus(401);
 
-  jwt.verify(token, publicKey,{algorithms: ['RS256']}, (err, decoded) => {
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     console.log(err);
 
     if (err) return res.sendStatus(403);
@@ -2255,6 +2246,24 @@ function verifyToken(req, res, next) {
     next();
   });
 }
+// function validateKey(secretOrPublicKey) {
+//   if (secretOrPublicKey != null && !(secretOrPublicKey instanceof KeyObject)) {
+//     try {
+//       // Try to create a public key
+//       secretOrPublicKey = createPublicKey(secretOrPublicKey);
+//     } catch (_) {
+//       try {
+//         // Try to create a secret key
+//         secretOrPublicKey = createSecretKey(
+//           typeof secretOrPublicKey === 'string' ? Buffer.from(secretOrPublicKey) : secretOrPublicKey
+//         );
+//       } catch (_) {
+//         throw new Error('secretOrPublicKey is not valid key material');
+//       }
+//     }
+//   }
+//   return secretOrPublicKey;
+// }
 
 // function verifyToken(req, res, next) {
 //   const token = req.headers['authorization']?.split(' ')[1];
@@ -2263,7 +2272,8 @@ function verifyToken(req, res, next) {
 //   }
 
 //   try {
-//     const decoded = jwt.verify(token, process.env.JWT_PUBLIC,{algorithms: ['RS256']});
+//     const secretOrPublicKey = validateKey(process.env.JWT_SECRET || 'your-default-key'); // Replace with your actual secret/public key
+//     const decoded = jwt.verify(token, secretOrPublicKey);
 //     req.user = decoded; // Attach decoded payload to the request
 //     next();
 //   } catch (err) {
@@ -2305,3 +2315,4 @@ async function run() {
   }
 }
 run().catch(console.dir);
+
